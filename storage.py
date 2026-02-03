@@ -52,5 +52,3 @@ def create_id(url: str) -> str:
 
         _storage[sid] = url
         return sid
-
-

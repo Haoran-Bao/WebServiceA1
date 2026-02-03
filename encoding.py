@@ -2,19 +2,19 @@ base64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_
 base64_indexes = {char: i for i, char in enumerate(base64_chars)}
 
 
-def encoding_base64(n: int) -> str:
+def encode_base64(n: int) -> str:
     '''
     Convert an integer to a base 64 string.
 
-    >>> encoding_base64(0)
+    >>> encode_base64(0)
     'A'
-    >>> encoding_base64(1)
+    >>> encode_base64(1)
     'B'
-    >>> encoding_base64(63)
+    >>> encode_base64(63)
     '_'
-    >>> encoding_base64(64)
+    >>> encode_base64(64)
     'BA'
-    >>> encoding_base64(100_000)
+    >>> encode_base64(100_000)
     'Yag'
     '''
     result = ''
@@ -29,19 +29,19 @@ def encoding_base64(n: int) -> str:
     return result
 
 
-def decoding_base64(s: str) -> int:
+def decode_base64(s: str) -> int:
     '''
     Convert a base 64 string to an integer.
 
-    >>> decoding_base64('A')
+    >>> decode_base64('A')
     0
-    >>> decoding_base64('B')
+    >>> decode_base64('B')
     1
-    >>> decoding_base64('_')
+    >>> decode_base64('_')
     63
-    >>> decoding_base64('BA')
+    >>> decode_base64('BA')
     64
-    >>> decoding_base64('Yag')
+    >>> decode_base64('Yag')
     100000
     '''
     result = 0
