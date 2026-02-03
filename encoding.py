@@ -1,8 +1,50 @@
+base64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+base64_indexes = {char: i for i, char in enumerate(base64_chars)}
 
 
 def encoding_base64(n: int) -> str:
-    pass
+    '''
+    Convert an integer to a base 64 string.
+
+    >>> encoding_base64(0)
+    'A'
+    >>> encoding_base64(1)
+    'B'
+    >>> encoding_base64(63)
+    '_'
+    >>> encoding_base64(64)
+    'BA'
+    >>> encoding_base64(100_000)
+    'Yag'
+    '''
+    result = ''
+
+    while n > 0:
+        trailing_bits = n % 64
+        result = base64_chars[trailing_bits] + result
+        n = n // 64
+
+    if result == '':
+        return 'A'
+    return result
+
 
 def decoding_base64(s: str) -> int:
-    pass
+    '''
+    Convert a base 64 string to an integer.
 
+    >>> decoding_base64('A')
+    0
+    >>> decoding_base64('B')
+    1
+    >>> decoding_base64('_')
+    63
+    >>> decoding_base64('BA')
+    64
+    >>> decoding_base64('Yag')
+    100000
+    '''
+    result = 0
+    for i, char in enumerate(reversed(s)):
+        result += base64_indexes[char] * 64**i
+    return result
