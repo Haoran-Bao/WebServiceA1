@@ -1,5 +1,8 @@
 from flask import Flask
 
+import storage
+import validation
+
 
 app = Flask(__name__)
 
