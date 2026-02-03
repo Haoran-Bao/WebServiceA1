@@ -1,6 +1,36 @@
 from flask import Flask
 
 
+base64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+
+
+def int_to_base64(n: int):
+    '''
+    Convert an integer to a base 64 string.
+
+    >>> int_to_base64(0)
+    'A'
+    >>> int_to_base64(1)
+    'B'
+    >>> int_to_base64(63)
+    '_'
+    >>> int_to_base64(64)
+    'BA'
+    >>> int_to_base64(100_000)
+    'Yag'
+    '''
+    result = ''
+
+    while n > 0:
+        trailing_bits = n % 64
+        result = base64_chars[trailing_bits] + result
+        n = n // 64
+
+    if result == '':
+        return 'A'
+    return result
+
+
 app = Flask(__name__)
 
 @app.route('/<id>', methods=['GET'])
