@@ -1,8 +1,7 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, jsonify
 
 import storage
 import validation
-
 
 app = Flask(__name__)
 
@@ -12,7 +11,7 @@ def get_with_id(id):
     if url is None:
         return jsonify("error"), 404
 
-    return redirect(url, code=301)
+    return jsonify({"value": url}), 301
 
 
 @app.route('/<id>', methods=['PUT'])
@@ -22,14 +21,14 @@ def put_with_id(id):
         return jsonify("Error - Not Found"), 404
 
     data: dict[str, str] = request.get_json(silent=True) or {}
-    url: str | None = data.get('url')
+    new_url: str | None = data.get('url')
 
-    if url is None or not validation.is_valid_url(url):
+    if new_url is None or not validation.is_valid_url(new_url):
         return jsonify("Error - Bad Request"), 400
 
-    storage.set_url(id, url.strip())
+    storage.set_url(id, new_url.strip())
 
-    return jsonify(id), 200
+    return jsonify({"id": id}), 200
 
 
 @app.route('/<id>', methods=['DELETE'])
@@ -42,24 +41,25 @@ def delete_with_id(id):
 
 @app.route('/', methods=['GET'])
 def get_all():
-    return jsonify(storage.list_ids()), 200
+    return jsonify({"value": storage.list_ids()}), 200
 
 
 @app.route('/', methods=['POST'])
 def create_short_url():
     data: dict[str, str] = request.get_json(silent=True) or {}
-    url: str | None = data.get('url')
+    url: str | None = data.get('value')
 
     if url is None or not validation.is_valid_url(url):
         return jsonify("Error - Bad Request"), 400
 
     short_id = storage.create_id(url.strip())
 
-    return jsonify(short_id), 201
+    return jsonify({"id": short_id}), 201
 
 
 @app.route('/', methods=['DELETE'])
 def delete_all():
+    storage.delete_ids()
     return jsonify("Error"), 404
 
 if __name__ == '__main__':
