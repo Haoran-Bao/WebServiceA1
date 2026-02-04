@@ -35,11 +35,16 @@ def delete_id(sid: str) -> bool:
         else:
             return False
 
-def list_ids() -> list[str]:
+def list_ids() -> list[str] | Optional[list[str]]:
     with _lock:
-        return list(_storage.keys())
+        return list(_storage.keys()) or None
     
-    
+def delete_ids() -> None:
+    global _counter
+    with _lock:
+        _counter = 0
+        _storage.clear()
+   
 def create_id(url: str) -> str:
     global _counter
     with _lock:
