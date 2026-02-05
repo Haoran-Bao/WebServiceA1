@@ -1,5 +1,5 @@
 from typing import Optional
-import urllib.parse
+import re
 
 
 def read_url_from_request(request) -> Optional[str]:
