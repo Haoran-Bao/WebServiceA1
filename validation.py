@@ -7,6 +7,7 @@ def read_url_from_request(request) -> Optional[str]:
 
 
 def is_valid_url(url: str) -> bool:
+        # From: https://www.geeksforgeeks.org/dsa/check-if-an-url-is-valid-or-not-using-regular-expression/
         url_pattern = ("((http|https)://)(www.)?" + 
              "[a-zA-Z0-9@:%._\\+~#?&//=]" + 
              "{2,256}\\.[a-z]" + 
