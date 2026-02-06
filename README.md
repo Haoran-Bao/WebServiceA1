@@ -43,31 +43,25 @@ flask run -p 8000
 All endpoints are rooted at `/`. Responses are JSON unless otherwise noted.
 
 1. `POST /`
-
-   - Body: `{"value": "<long_url>"}`
-   - 201: `{"id": "<short_id>"}`
-   - 400 on missing/invalid URL
+  - Body: `{"value": "<long_url>"}`
+  - 201: `{"id": "<short_id>"}`
+  - 400 on missing/invalid URL
 2. `GET /<id>`
-
-   - 301: `{"value": "<long_url>"}`
-   - 404 if ID not found
+  - 301: `{"value": "<long_url>"}`
+  - 404 if ID not found
 3. `PUT /<id>`
-
-   - Body: `{"url": "<new_long_url>"}`
-   - 200: `{"id": "<short_id>"}`
-   - 400 on invalid URL
-   - 404 if ID not found
+  - Body: `{"url": "<new_long_url>"}`
+  - 200: `{"id": "<short_id>"}`
+  - 400 on invalid URL
+  - 404 if ID not found
 4. `DELETE /<id>`
-
-   - 204 on success
-   - 404 if ID not found
+  - 204 on success
+  - 404 if ID not found
 5. `GET /`
-
-   - 200: `{"value": ["<id1>", "<id2>", ...]}` or `{"value": null}` if empty
+  - 200: `{"value": ["<id1>", "<id2>", ...]}` or `{"value": null}` if empty
 6. `DELETE /`
-
-   - Deletes all entries and resets the counter.
-   - Returns 404 (as expected by the provided tests).
+  - Deletes all entries and resets the counter.
+  - Returns 404 (as expected by the provided tests).
 
 **Testing**
 Start MongoDB and the service, then run:
@@ -80,3 +74,4 @@ python -m unittest test/test_1_marking_mk2.py
 
 - The base64 alphabet in `encoding.py` is URL-safe: `A-Z a-z 0-9 - _`.
 - The counter for new IDs is stored in `db.counters` as `{ _id: "url_id", seq: <int> }`.
+
