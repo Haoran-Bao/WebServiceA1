@@ -25,7 +25,7 @@ class DatabaseStorage(AbstractStorage):
     def get_url(self, id: str) -> str | Optional[str]:
         with self._lock:
             doc = self._mappings.find_one({"_id": id}, {"url": 1})
-            return None if doc is None else doc["url"]
+            return doc.get("url") if doc else None
 
     def set_url(self, id: str, url: str) -> None:
         with self._lock:
