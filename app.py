@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 
-from utils import validation
+from utils import validation, frontend
 import storage
 
 app = Flask(__name__)
@@ -12,7 +12,10 @@ def get_with_id(id: str):
     if url is None:
         return jsonify("error"), 404
 
-    return jsonify({"value": url}), 301
+    response = jsonify({"value": url})
+    if frontend.requests_html(request.headers):
+        response.headers.add_header("Location", url)
+    return response, 301
 
 
 @app.route('/<id>', methods=['PUT'])
@@ -43,6 +46,8 @@ def delete_with_id(id: str):
 
 @app.route('/', methods=['GET'])
 def get_all():
+    if frontend.requests_html(request.headers):
+        return frontend.respond_frontend()
     return jsonify({"value": storage.list_ids()}), 200
 
 

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+      }
+      div {
+        margin: 1em;
+      }
+      h2 {
+        margin-top: 2em;
+      }
+      .list-container {
+        display: flex;
+        justify-content: center;
+      }
+      ul {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        max-width: 800px;
+        gap: 0.5em 2em;
+        flex-wrap: wrap;
+        place-content: center;
+      }
+      li {
+        display: inline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>URL Shortener</h1>
+    <section>
+      <form class="shorten">
+        <div>
+          <label>URL <input type="url" name="url" /></label>
+        </div>
+        <button type="submit">Shorten</button>
+        <div class="result-container" hidden>
+          Short URL: <a class="result" href="#"></a>
+        </div>
+        <div class="result-container-error" hidden></div>
+      </form>
+    </section>
+
+    <section>
+      <h2>Edit URL</h2>
+      <div>
+        <form class="edit">
+          <div>
+            <label>
+              <span class="origin"></span>
+              <input name="id" placeholder="URL ID" />
+            </label>
+          </div>
+          <div>
+            <label>New URL <input type="url" name="new-url" /></label>
+          </div>
+          <button type="submit">Update URL</button>
+          <div class="result-container" hidden>
+            Success: <a class="result" href="#"></a>
+          </div>
+          <div class="result-container-error" hidden></div>
+        </form>
+      </div>
+    </section>
+
+    <section>
+      <h2>Delete URL</h2>
+      <div>
+        <form class="delete">
+          <div>
+            <label>
+              <span class="origin"></span>
+              <input name="del-id" placeholder="URL ID" />
+            </label>
+          </div>
+          <button type="submit">Delete URL</button>
+          <div class="result-container" hidden>Success</div>
+          <div class="result-container-error" hidden></div>
+        </form>
+      </div>
+    </section>
+
+    <section>
+      <h2>List URLs</h2>
+      <button class="load-urls">Load URLs</button>
+      <div class="list-container">
+        <ul class="urls"></ul>
+      </div>
+    </section>
+
+    <script>
+      const $ = (query) => document.querySelector(query);
+      const $$ = (query) => document.querySelectorAll(query);
+
+      async function shortenUrl(url) {
+        const response = await fetch(`${location.origin}/`, {
+          method: "POST",
+          body: JSON.stringify({
+            value: url,
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-type": "application/json",
+          },
+        });
+        if (response.status === 400) {
+          throw new Error("URL is malformed");
+        }
+        const { id } = await response.json();
+        return `${location.origin}/${id}`;
+      }
+
+      $(".shorten").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const url = $("[name=url]").value;
+        const resultEl = $(".result");
+        try {
+          resultEl.innerText = resultEl.href = await shortenUrl(url);
+          $(".shorten .result-container").hidden = false;
+          $(".shorten .result-container-error").hidden = true;
+        } catch (e) {
+          $(".shorten .result-container-error").innerText = e;
+          $(".shorten .result-container").hidden = true;
+          $(".shorten .result-container-error").hidden = false;
+        }
+      });
+
+      async function editUrl(urlId, url) {
+        const response = await fetch(`${location.origin}/${urlId}`, {
+          method: "PUT",
+          body: JSON.stringify({ url }),
+          headers: {
+            Accept: "application/json",
+            "Content-type": "application/json",
+          },
+        });
+        if (response.status === 400) {
+          throw new Error("URL is malformed");
+        } else if (response.status === 404) {
+          throw new Error("ID does not exist");
+        }
+        const { id } = await response.json();
+        return `${location.origin}/${id}`;
+      }
+
+      $(".edit").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const url = $("[name=new-url]").value;
+        const id = $("[name=id]").value;
+        const resultEl = $(".edit .result");
+        try {
+          resultEl.innerText = resultEl.href = await editUrl(id, url);
+          $(".edit .result-container").hidden = false;
+          $(".edit .result-container-error").hidden = true;
+        } catch (e) {
+          $(".edit .result-container-error").innerText = e;
+          $(".edit .result-container").hidden = true;
+          $(".edit .result-container-error").hidden = false;
+        }
+      });
+
+      async function deleteUrl(urlId) {
+        const response = await fetch(`${location.origin}/${urlId}`, {
+          method: "DELETE",
+        });
+        if (response.status === 404) {
+          throw new Error("ID does not exist");
+        }
+      }
+
+      $(".delete").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = $("[name=del-id]").value;
+        try {
+          await deleteUrl(id);
+          $(".delete .result-container").hidden = false;
+          $(".delete .result-container-error").hidden = true;
+        } catch (e) {
+          $(".delete .result-container-error").innerText = e;
+          $(".delete .result-container").hidden = true;
+          $(".delete .result-container-error").hidden = false;
+        }
+      });
+
+      async function loadUrls() {
+        const response = await fetch(`${location.origin}/`, {
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        const { value } = await response.json();
+        if (value === null) {
+          return [];
+        } else {
+          return value;
+        }
+      }
+
+      $(".load-urls").addEventListener("click", async (e) => {
+        const urls = await loadUrls();
+        const urlsList = $(".urls");
+        urlsList.innerHTML = "";
+        for (const url of urls) {
+          const a = document.createElement("a");
+          a.innerText = a.href = `${location.origin}/${url}`;
+          const li = document.createElement("li");
+          li.appendChild(a);
+          urlsList.appendChild(li);
+        }
+      });
+
+      $$(".origin").forEach((x) => (x.innerText = `${location.origin}/`));
+    </script>
+  </body>
+</html>
