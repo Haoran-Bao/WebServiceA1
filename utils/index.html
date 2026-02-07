@@ -82,6 +82,7 @@
             </label>
           </div>
           <button type="submit">Delete URL</button>
+          <button class="delete-all">Delete all URLs</button>
           <div class="result-container" hidden>Success</div>
           <div class="result-container-error" hidden></div>
         </form>
@@ -188,6 +189,19 @@
           $(".delete .result-container").hidden = true;
           $(".delete .result-container-error").hidden = false;
         }
+      });
+
+      async function deleteAll() {
+        const response = await fetch(`${location.origin}/`, {
+          method: "DELETE",
+        });
+      }
+
+      $(".delete-all").addEventListener("click", async (e) => {
+        e.preventDefault();
+        await deleteAll();
+        $(".delete .result-container").hidden = false;
+        $(".delete .result-container-error").hidden = true;
       });
 
       async function loadUrls() {
