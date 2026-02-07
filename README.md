@@ -18,6 +18,8 @@ The service stores URL-to-ID mappings **in memory**. Short IDs are generated wit
 - `utils/encoding.py` — Base64-like ID encoding/decoding helpers.
 - `utils/validation.py` — URL validation
 - `utils/config.py` — Loads config values from `config.json`
+- `utils/index.html` — The web frontend of this URL shortener
+- `utils/frontend.py` — Helper functions for detecting `Accept: text/html` and responding with the web frontend
 - `storage/` — Storage layer: Package responsible for usage of in-memory or DB Storage based on config value
   - `storage/abstract_storage.py` — Abstract base class for storage
   - `storage/memory.py` — In-memory storage and ID generation (used by default)
@@ -152,3 +154,10 @@ The `config.json` section `mongodb` is used only when `bonus` is true:
 - `DELETE /` clears all documents in the mappings collection and resets the counter document to `seq: 0`.
 
 All other endpoints, request/response formats, and test usage remain the same as in the base implementation.
+
+### Web frontend
+
+When the homepage (`GET /`) is requested with the `Accept: text/html` header,
+a web frontend is returned instead of a JSON object with all URL IDs.
+This frontend lets users shorten URLs, edit short URLs,
+delete URLs and show all URLs.
