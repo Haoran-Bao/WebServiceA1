@@ -65,7 +65,7 @@ class DatabaseStorage(AbstractStorage):
 
             # If id somehow exists, keep incrementing
             # (shouldn't happen if encoding is deterministic and counter is monotonic)
-            while self._mappings.find_one({"_id": id}, {"_id": 1}) is not None:
+            while self._mappings.find_one({"_id": new_id}, {"_id": 1}) is not None:
                 doc = self._counters.find_one_and_update(
                     {"_id": "url_id"},
                     {"$inc": {"seq": 1}},
@@ -76,3 +76,4 @@ class DatabaseStorage(AbstractStorage):
                 new_id = encode_base64(seq)
             self._mappings.insert_one({"_id": new_id, "url": url})
             return new_id
+
