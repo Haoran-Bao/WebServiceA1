@@ -61,7 +61,7 @@ class DatabaseStorage(AbstractStorage):
                 return_document=ReturnDocument.AFTER,
             )
             seq = int(doc["seq"])
-            id = encode_base64(seq)
+            new_id = encode_base64(seq)
 
             # If id somehow exists, keep incrementing
             # (shouldn't happen if encoding is deterministic and counter is monotonic)
@@ -73,6 +73,6 @@ class DatabaseStorage(AbstractStorage):
                     return_document=ReturnDocument.AFTER,
                 )
                 seq = int(doc["seq"])
-                id = encode_base64(seq)
-            self._mappings.insert_one({"_id": id, "url": url})
-            return id
+                new_id = encode_base64(seq)
+            self._mappings.insert_one({"_id": new_id, "url": url})
+            return new_id

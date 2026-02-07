@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 
-from utils import config, validation
+from utils import validation
 import storage
 
 app = Flask(__name__)
@@ -65,4 +65,4 @@ def delete_all():
     return jsonify("Error"), 404
 
 if __name__ == '__main__':
-    app.run(host=config.flask_host, port=config.flask_port, debug=True)
+    app.run(port=8000, debug=True)

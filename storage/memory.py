@@ -41,9 +41,9 @@ class MemoryStorage(AbstractStorage):
     def create_id(self, url: str) -> str:
         with self._lock:
             self._counter += 1
-            id = encode_base64(self._counter)
-            while id in self._storage:
+            new_id = encode_base64(self._counter)
+            while new_id in self._storage:
                 self._counter += 1
-                id = encode_base64(self._counter)
-            self._storage[id] = url
-            return id
+                new_id = encode_base64(self._counter)
+            self._storage[new_id] = url
+            return new_id
