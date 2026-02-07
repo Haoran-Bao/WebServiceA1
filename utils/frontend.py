@@ -10,7 +10,7 @@ def requests_html(headers: Headers):
     accept = headers.get('Accept')
     if not accept:
         return False
-    types = accept.split(',')
+    types = [part.strip() for part in accept.split(',')]
     split_types = [t.split(';q=') for t in types]
     types_with_quality = {
         split[0]: 1.0 if len(split) < 2 else float(split[1])
