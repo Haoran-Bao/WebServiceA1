@@ -17,8 +17,6 @@ def requests_html(headers: Headers):
         for split in split_types
     }
 
-    print(types_with_quality)
-
     text_html = types_with_quality.get('text/html', 0)
     text_wildcard = types_with_quality.get('text/*', 0)
     application_json = types_with_quality.get('application/json', 0)
