@@ -1,0 +1,16 @@
+{
+  "flask": {
+    "host": "127.0.0.1",
+    "port": 8000
+  },
+  "mongodb": {
+    "port": 27017,
+    "host": "localhost",
+    "database": "url_shortener",
+    "collections": {
+      "mappings": "mappings",
+      "counters": "counters"
+    }
+  },
+  "bonus": true
+}

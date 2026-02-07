@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 
+from utils import config, validation
 import storage
-import validation
 
 app = Flask(__name__)
 
+
 @app.route('/<id>', methods=['GET'])
-def get_with_id(id):
+def get_with_id(id: str):
     url: str | None = storage.get_url(id)
     if url is None:
         return jsonify("error"), 404
@@ -15,7 +16,7 @@ def get_with_id(id):
 
 
 @app.route('/<id>', methods=['PUT'])
-def put_with_id(id):
+def put_with_id(id: str):
     url: str | None = storage.get_url(id)
     if url is None:
         return jsonify("Error - Not Found"), 404
@@ -33,7 +34,7 @@ def put_with_id(id):
 
 
 @app.route('/<id>', methods=['DELETE'])
-def delete_with_id(id):
+def delete_with_id(id: str):
     if not storage.delete_id(id):
         return jsonify("Error - Not Found"), 404
 
@@ -64,4 +65,4 @@ def delete_all():
     return jsonify("Error"), 404
 
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    app.run(host=config.flask_host, port=config.flask_port, debug=True)
