@@ -2,6 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=flask
 
 data
+**/.DS_Store
+__pycache__/
 
 ### Flask ###
 instance/*
