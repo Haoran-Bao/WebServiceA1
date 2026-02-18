@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 
+from jwt import generate_jwt
+
 app = Flask(__name__)
 
 
@@ -31,7 +33,8 @@ def login():
     password = data['password']
     # ...
     # If the password is incorrect, return 403, "forbidden"
-    return jsonify({'token': 'JWT TOKEN'}), 201
+    token = generate_jwt(username)
+    return jsonify({'token': token}), 201
 
 
 if __name__ == '__main__':
