@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 
-from jwt import generate_jwt
+from jwt import generate_jwt, verify_jwt
 
 app = Flask(__name__)
 
@@ -35,6 +35,16 @@ def login():
     # If the password is incorrect, return 403, "forbidden"
     token = generate_jwt(username)
     return jsonify({'token': token}), 201
+
+
+@app.route('/auth/verify', methods=['POST'])
+def verify_token():
+    data: dict[str, str] = request.get_json(silent=True, force=True) or {}
+    token = data.get('token') or request.headers.get('Authorization')
+    payload = verify_jwt(token)
+    if payload is None:
+        return jsonify("forbidden"), 403
+    return jsonify({'payload': payload}), 200
 
 
 if __name__ == '__main__':

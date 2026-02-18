@@ -24,6 +24,11 @@ def _sign_hs256(message: bytes, secret: str) -> str:
     return _b64url_encode(digest)
 
 
+def _b64url_decode(data: str) -> bytes:
+    padding = '=' * (-len(data) % 4)
+    return base64.urlsafe_b64decode(data + padding)
+
+
 def generate_jwt(username: str, ttl_seconds: int | None = None) -> str:
     header = {'alg': JWT_ALG, 'typ': 'JWT'}
     now = int(time.time())
@@ -39,3 +44,36 @@ def generate_jwt(username: str, ttl_seconds: int | None = None) -> str:
     signing_input = f"{header_b64}.{payload_b64}".encode('ascii')
     signature_b64 = _sign_hs256(signing_input, JWT_SECRET)
     return f"{header_b64}.{payload_b64}.{signature_b64}"
+
+
+def verify_jwt(token: str) -> dict | None:
+    if not token:
+        return None
+
+    if token.lower().startswith('bearer '):
+        token = token[7:].strip()
+
+    parts = token.split('.')
+    if len(parts) != 3:
+        return None
+
+    header_b64, payload_b64, signature_b64 = parts
+    try:
+        header = json.loads(_b64url_decode(header_b64))
+        payload = json.loads(_b64url_decode(payload_b64))
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+    if header.get('alg') != JWT_ALG or header.get('typ') != 'JWT':
+        return None
+
+    signing_input = f"{header_b64}.{payload_b64}".encode('ascii')
+    expected_sig = _sign_hs256(signing_input, JWT_SECRET)
+    if not hmac.compare_digest(expected_sig, signature_b64):
+        return None
+
+    exp = payload.get('exp')
+    if isinstance(exp, int) and exp < int(time.time()):
+        return None
+
+    return payload
