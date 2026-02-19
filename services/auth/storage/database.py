@@ -29,7 +29,10 @@ class DatabaseStorage(AbstractStorage):
 
     def update_password(self, username: str, old_password: str, new_password: str) -> bool:
         with self._lock:
-            if not self.verify_password(username, old_password):
+            doc = self._users.find_one({"_id": username})
+            if doc is None:
+                return False
+            if not verify_password(old_password, doc.get("password")):
                 return False
             self._users.find_one_and_update(
                 {"_id": username},
