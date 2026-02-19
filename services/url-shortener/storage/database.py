@@ -18,7 +18,7 @@ class DatabaseStorage(AbstractStorage):
         db = client[config.mongodb_database]
         mappings_name = config.mongodb_collections["mappings"]
         counters_name = config.mongodb_collections["counters"]
-        self._mappings = db[mappings_name]   # {_id: <id>, url: <long_url>}
+        self._mappings = db[mappings_name]   # {_id: <id>, url: <long_url>, owner: <username>}
         self._counters = db[counters_name]   # {_id: "url_id", seq: <counter>}
         self._lock = Lock()
 
@@ -26,6 +26,11 @@ class DatabaseStorage(AbstractStorage):
         with self._lock:
             doc = self._mappings.find_one({"_id": id}, {"url": 1})
             return doc.get("url") if doc else None
+
+    def get_owner(self, id: str) -> str | Optional[str]:
+        with self._lock:
+            doc = self._mappings.find_one({"_id": id}, {"owner": 1})
+            return doc.get("owner") if doc else None
 
     def set_url(self, id: str, url: str) -> None:
         with self._lock:
@@ -43,6 +48,11 @@ class DatabaseStorage(AbstractStorage):
             ids = [d["_id"] for d in self._mappings.find({}, {"_id": 1})]
             return ids or None
 
+    def list_ids_by_owner(self, owner: str) -> list[str] | Optional[list[str]]:
+        with self._lock:
+            ids = [d["_id"] for d in self._mappings.find({"owner": owner}, {"_id": 1})]
+            return ids or None
+
     def delete_ids(self) -> None:
         with self._lock:
             self._mappings.delete_many({})
@@ -52,7 +62,7 @@ class DatabaseStorage(AbstractStorage):
                 upsert=True,
             )
 
-    def create_id(self, url: str) -> str:
+    def create_id(self, url: str, owner: str) -> str:
         with self._lock:
             doc = self._counters.find_one_and_update(
                 {"_id": "url_id"},
@@ -74,6 +84,6 @@ class DatabaseStorage(AbstractStorage):
                 )
                 seq = int(doc["seq"])
                 new_id = encode_base64(seq)
-            self._mappings.insert_one({"_id": new_id, "url": url})
+            self._mappings.insert_one({"_id": new_id, "url": url, "owner": owner})
             return new_id
 

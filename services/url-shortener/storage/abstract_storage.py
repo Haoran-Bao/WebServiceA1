@@ -28,11 +28,21 @@ class AbstractStorage(ABC):
         pass
 
     @abstractmethod
+    def list_ids_by_owner(self, owner: str) -> list[str] | Optional[list[str]]:
+        """List all IDs for a given owner."""
+        pass
+
+    @abstractmethod
     def delete_ids(self) -> None:
         """Delete all IDs and reset counter."""
         pass
 
     @abstractmethod
-    def create_id(self, url: str) -> str:
-        """Create a new ID for the given URL."""
+    def create_id(self, url: str, owner: str) -> str:
+        """Create a new ID for the given URL and owner."""
+        pass
+
+    @abstractmethod
+    def get_owner(self, id: str) -> str | Optional[str]:
+        """Retrieve owner by ID."""
         pass

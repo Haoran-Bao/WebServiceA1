@@ -43,12 +43,21 @@ def list_ids() -> list[str] | Optional[list[str]]:
     """List all IDs."""
     return _storage.list_ids()
 
+def list_ids_by_owner(owner: str) -> list[str] | Optional[list[str]]:
+    """List all IDs for a given owner."""
+    return _storage.list_ids_by_owner(owner)
+
 
 def delete_ids() -> None:
     """Delete all IDs and reset counter."""
     _storage.delete_ids()
 
 
-def create_id(url: str) -> str:
-    """Create a new ID for the given URL."""
-    return _storage.create_id(url)
+def create_id(url: str, owner: str) -> str:
+    """Create a new ID for the given URL and owner."""
+    return _storage.create_id(url, owner)
+
+
+def get_owner(id: str) -> str | Optional[str]:
+    """Retrieve owner by ID."""
+    return _storage.get_owner(id)

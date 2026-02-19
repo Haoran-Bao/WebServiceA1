@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 
 from jwt import generate_jwt, verify_jwt
+import storage
 
 app = Flask(__name__)
 
@@ -10,8 +11,8 @@ def create_user():
     data: dict[str, str] = request.get_json(silent=True, force=True) or {}
     username = data['username']
     password = data['password']
-    # ...
-    # If this username already exists, return 409, "duplicate"
+    if not storage.create_user(username, password):
+        return jsonify("duplicate"), 409
     return jsonify({'username': username}), 201
 
 
@@ -21,8 +22,8 @@ def update_password():
     username = data['username']
     old_password = data['old-password']
     new_password = data['new-password']
-    # ...
-    # If the old password is incorrect, return 403, "forbidden"
+    if not storage.update_password(username, old_password, new_password):
+        return jsonify("forbidden"), 403
     return jsonify({'username': username}), 200
 
 
@@ -31,9 +32,9 @@ def login():
     data: dict[str, str] = request.get_json(silent=True, force=True) or {}
     username = data['username']
     password = data['password']
-    # ...
-    # If the password is incorrect, return 403, "forbidden"
-    token = generate_jwt(username)
+    if not storage.verify_password(username, password):
+        return jsonify("forbidden"), 403
+    token = generate_jwt(username, password)
     return jsonify({'token': token}), 201
 
 
@@ -43,6 +44,12 @@ def verify_token():
     token = data.get('token') or request.headers.get('Authorization')
     payload = verify_jwt(token)
     if payload is None:
+        return jsonify("forbidden"), 403
+    username = payload.get('username')
+    password = payload.get('password')
+    if not isinstance(username, str) or not isinstance(password, str):
+        return jsonify("forbidden"), 403
+    if not storage.verify_password(username, password):
         return jsonify("forbidden"), 403
     return jsonify({'payload': payload}), 200
 

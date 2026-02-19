@@ -1,6 +1,5 @@
 {
   "jwt": {
-    "secret": "change-me",
-    "ttl_seconds": 3600
+    "secret": "change-me"
   }
 }
