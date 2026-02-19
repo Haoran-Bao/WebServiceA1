@@ -34,4 +34,4 @@ def requests_html(headers: Headers):
 
 
 def respond_frontend():
-    return send_file('index.html'), 200
+    return send_file('../../index.html'), 200
