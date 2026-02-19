@@ -97,12 +97,43 @@
       </div>
     </section>
 
+    <section>
+      <h2 id="login">Login</h2>
+      <form class="login">
+        <div>
+          <label> Username <input name="username" /> </label>
+        </div>
+        <div>
+          <label> Password <input name="password" type="password" /> </label>
+        </div>
+        <button type="submit">Login</button>
+        <button class="register">Register</button>
+        <div class="result-container" hidden>Success</div>
+        <div class="result-container-error" hidden></div>
+      </form>
+
+      <h3>Token</h3>
+      <form class="token">
+        <div>
+          <label> Token <input name="token" /> </label>
+        </div>
+        <button type="submit">Verify</button>
+        <div class="result-container" hidden>Success</div>
+        <div class="result-container-error" hidden></div>
+      </form>
+    </section>
+
     <script>
+      const SHORTENER_SERVICE = location.origin;
+      let authUrl = new URL(location.href);
+      authUrl.port = 8001;
+      const AUTH_SERVICE = authUrl.origin;
+
       const $ = (query) => document.querySelector(query);
       const $$ = (query) => document.querySelectorAll(query);
 
       async function shortenUrl(url) {
-        const response = await fetch(`${location.origin}/`, {
+        const response = await fetch(`${SHORTENER_SERVICE}/`, {
           method: "POST",
           body: JSON.stringify({
             value: url,
@@ -116,7 +147,7 @@
           throw new Error("URL is malformed");
         }
         const { id } = await response.json();
-        return `${location.origin}/${id}`;
+        return `${SHORTENER_SERVICE}/${id}`;
       }
 
       $(".shorten").addEventListener("submit", async (e) => {
@@ -135,7 +166,7 @@
       });
 
       async function editUrl(urlId, url) {
-        const response = await fetch(`${location.origin}/${urlId}`, {
+        const response = await fetch(`${SHORTENER_SERVICE}/${urlId}`, {
           method: "PUT",
           body: JSON.stringify({ url }),
           headers: {
@@ -149,7 +180,7 @@
           throw new Error("ID does not exist");
         }
         const { id } = await response.json();
-        return `${location.origin}/${id}`;
+        return `${SHORTENER_SERVICE}/${id}`;
       }
 
       $(".edit").addEventListener("submit", async (e) => {
@@ -169,7 +200,7 @@
       });
 
       async function deleteUrl(urlId) {
-        const response = await fetch(`${location.origin}/${urlId}`, {
+        const response = await fetch(`${SHORTENER_SERVICE}/${urlId}`, {
           method: "DELETE",
         });
         if (response.status === 404) {
@@ -192,7 +223,7 @@
       });
 
       async function deleteAll() {
-        const response = await fetch(`${location.origin}/`, {
+        const response = await fetch(`${SHORTENER_SERVICE}/`, {
           method: "DELETE",
         });
       }
@@ -205,7 +236,7 @@
       });
 
       async function loadUrls() {
-        const response = await fetch(`${location.origin}/`, {
+        const response = await fetch(`${SHORTENER_SERVICE}/`, {
           headers: {
             Accept: "application/json",
           },
@@ -224,14 +255,107 @@
         urlsList.innerHTML = "";
         for (const url of urls) {
           const a = document.createElement("a");
-          a.innerText = a.href = `${location.origin}/${url}`;
+          a.innerText = a.href = `${SHORTENER_SERVICE}/${url}`;
           const li = document.createElement("li");
           li.appendChild(a);
           urlsList.appendChild(li);
         }
       });
 
-      $$(".origin").forEach((x) => (x.innerText = `${location.origin}/`));
+      async function login(username, password) {
+        const response = await fetch(`${AUTH_SERVICE}/users/login`, {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        if (response.status === 403) {
+          throw new Error("Incorrect credentials");
+        }
+        const { token } = await response.json();
+        return token;
+      }
+
+      $(".login").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = $("[name=username]").value;
+        const password = $("[name=password]").value;
+        try {
+          const token = await login(username, password);
+          $(".login .result-container").hidden = false;
+          $(".login .result-container").innerText = "Successfully logged in";
+          $(".login .result-container-error").hidden = true;
+          $("[name=token]").value = token;
+        } catch (e) {
+          $(".login .result-container-error").innerText = e;
+          $(".login .result-container").hidden = true;
+          $(".login .result-container-error").hidden = false;
+        }
+      });
+
+      async function register(username, password) {
+        const response = await fetch(`${AUTH_SERVICE}/users`, {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        if (response.status === 409) {
+          throw new Error("Username already exists");
+        }
+      }
+
+      $(".register").addEventListener("click", async (e) => {
+        e.preventDefault();
+        const username = $("[name=username]").value;
+        const password = $("[name=password]").value;
+        try {
+          await register(username, password);
+          $(".login .result-container").hidden = false;
+          $(".login .result-container").innerText = "Successfully registered";
+          $(".login .result-container-error").hidden = true;
+        } catch (e) {
+          $(".login .result-container-error").innerText = e;
+          $(".login .result-container").hidden = true;
+          $(".login .result-container-error").hidden = false;
+        }
+      });
+
+      async function verify(token) {
+        const response = await fetch(`${AUTH_SERVICE}/auth/verify`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: token,
+          },
+        });
+        if (response.status === 403) {
+          throw new Error("Token is invalid");
+        }
+        const { payload } = await response.json();
+        return payload;
+      }
+
+      $(".token").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = $("[name=token]").value;
+        try {
+          const payload = await verify(token);
+          $(".token .result-container").hidden = false;
+          $(".token .result-container").innerText =
+            `Welcome, ${JSON.stringify(payload)}`;
+          $(".token .result-container-error").hidden = true;
+          $("[name=token]").value = token;
+        } catch (e) {
+          $(".token .result-container-error").innerText = e;
+          $(".token .result-container").hidden = true;
+          $(".token .result-container-error").hidden = false;
+        }
+      });
+
+      $$(".origin").forEach((x) => (x.innerText = `${SHORTENER_SERVICE}/`));
     </script>
   </body>
 </html>
