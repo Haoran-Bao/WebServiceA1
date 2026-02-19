@@ -1,6 +1,17 @@
 from .memory import MemoryStorage
+from .database import DatabaseStorage
+from storage.abstract_storage import AbstractStorage
+from utils import config
 
-_storage = MemoryStorage()
+
+def get_storage() -> AbstractStorage:
+    if config.bonus:
+        from storage.database import DatabaseStorage
+        return DatabaseStorage()
+    return MemoryStorage()
+
+
+_storage = get_storage()
 
 
 def create_user(username: str, password: str) -> bool:
