@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import os
+import time
 from pathlib import Path
 
 _CONFIG_PATH = Path(__file__).resolve().parent / 'config.json'
@@ -10,6 +11,7 @@ with open(_CONFIG_PATH, encoding='utf-8') as f:
     _config = json.load(f)
 
 JWT_SECRET = os.getenv('AUTH_JWT_SECRET', _config['jwt']['secret'])
+JWT_TTL_SECONDS = int(_config['jwt'].get('ttl_seconds', 3600))
 JWT_ALG = 'HS256'
 
 
@@ -27,11 +29,14 @@ def _b64url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode(data + padding)
 
 
-def generate_jwt(username: str, password: str) -> str:
+def generate_jwt(username: str, ttl_seconds: int | None = None) -> str:
     header = {'alg': JWT_ALG, 'typ': 'JWT'}
+    now = int(time.time())
+    ttl = JWT_TTL_SECONDS if ttl_seconds is None else int(ttl_seconds)
     payload = {
         'username': username,
-        'password': password,
+        'iat': now,
+        'exp': now + ttl,
     }
 
     header_b64 = _b64url_encode(json.dumps(header, separators=(',', ':'), sort_keys=True).encode('utf-8'))
@@ -65,6 +70,10 @@ def verify_jwt(token: str) -> dict | None:
     signing_input = f"{header_b64}.{payload_b64}".encode('ascii')
     expected_sig = _sign_hs256(signing_input, JWT_SECRET)
     if not hmac.compare_digest(expected_sig, signature_b64):
+        return None
+
+    exp = payload.get('exp')
+    if isinstance(exp, int) and exp < int(time.time()):
         return None
 
     return payload

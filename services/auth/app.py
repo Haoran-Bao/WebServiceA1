@@ -34,7 +34,7 @@ def login():
     password = data['password']
     if not storage.verify_password(username, password):
         return jsonify("forbidden"), 403
-    token = generate_jwt(username, password)
+    token = generate_jwt(username)
     return jsonify({'token': token}), 201
 
 
@@ -46,10 +46,7 @@ def verify_token():
     if payload is None:
         return jsonify("forbidden"), 403
     username = payload.get('username')
-    password = payload.get('password')
-    if not isinstance(username, str) or not isinstance(password, str):
-        return jsonify("forbidden"), 403
-    if not storage.verify_password(username, password):
+    if not isinstance(username, str):
         return jsonify("forbidden"), 403
     return jsonify({'payload': payload}), 200
 
