@@ -1,40 +1,41 @@
 # Assignment1 - Web Services and Cloud-Based Systems
 
-URL shortener service built with Flask. It exposes a small REST API for creating, retrieving, updating, and deleting short URLs.
+URL shortener service and authentication service built with Flask. The URL shortener exposes a REST API for creating, retrieving, updating, and deleting short URLs, protected by JWT-based authentication.
 
 ## Overview
 
-The service stores URL-to-ID mappings **in memory**. Short IDs are generated with a monotonic counter and encoded using a URL-safe base64 alphabet (`A–Z`, `a–z`, `0–9`, `-`, `_`). Encoding and decoding helpers are present in `utils/encoding.py`.
+The URL shortener stores URL-to-ID mappings in memory by default. Short IDs are generated with a monotonic counter and encoded using a URL-safe base64 alphabet (`A-Z`, `a-z`, `0-9`, `-`, `_`). Encoding and decoding helpers are present in `services/url-shortener/utils/encoding.py`.
+
+The authentication service issues JWTs and verifies them via a dedicated endpoint. JWTs are constructed manually (header + payload JSON, base64url encoding, and HS256 signature).
 
 ## Requirements
 
 - Python 3.10+ (tested with `python3`)
 - Python packages: see `requirements.txt` (flask; `requests` for tests; `pymongo` for bonus)
-- MongoDB running and reachable (e.g. locally at `mongodb://localhost:27017/`) (bonus) — required when `config.json` has `"bonus": true`
+- MongoDB running and reachable (e.g. locally at `mongodb://localhost:27017/`) (bonus) required when `services/url-shortener/config.json` has `"bonus": true`
 
 ## Project Structure
 
-- `app.py` — Flask app and routes
-- `utils/encoding.py` — Base64-like ID encoding/decoding helpers.
-- `utils/validation.py` — URL validation
-- `utils/config.py` — Loads config values from `config.json`
-- `utils/index.html` — The web frontend of this URL shortener
-- `utils/frontend.py` — Helper functions for detecting `Accept: text/html` and responding with the web frontend
-- `storage/` — Storage layer: Package responsible for usage of in-memory or DB Storage based on config value
-  - `storage/abstract_storage.py` — Abstract base class for storage
-  - `storage/memory.py` — In-memory storage and ID generation (used by default)
-  - `storage/database.py` — MongoDB storage (client and collection definitions) and ID generation (bonus)
-- `.flaskenv` — Flask run settings (e.g. `FLASK_RUN_PORT=8000`)
-- `config.json` — Configuration (MongoDB host/port/database/collections; bonus flag)
-- `requirements.txt` — Python dependencies
-- `test/test_1_marking_mk2.py` — Integration tests (service expected on port 8000)
+- `services/auth/app.py` - Auth service Flask app and routes
+- `services/auth/jwt.py` - Manual JWT construction and verification
+- `services/auth/config.json` - Auth service configuration (JWT secret)
+- `services/auth/storage/` - Auth storage abstraction and memory implementation
+- `services/url-shortener/app.py` - URL shortener Flask app and routes
+- `services/url-shortener/utils/` - URL shortener helpers (encoding, validation, frontend, auth client)
+- `services/url-shortener/storage/` - URL shortener storage abstraction and implementations
+- `services/url-shortener/config.json` - URL shortener configuration (MongoDB and bonus flag)
+- `services/*/.flaskenv` - Flask run settings (ports)
+- `requirements.txt` - Python dependencies
+- `test/test_app.py` - Integration tests (services expected on ports 8000 and 8001)
 
 ## Configuration
 
-- `**.flaskenv**` — Set `FLASK_RUN_PORT=8000` (or other port) for `flask run`.
-- `**config.json**` holds:
-  - `mongodb` (bonus) — `host`, `port`, `database`, `collections.mappings`, `collections.counters`; used when bonus is enabled
-  - `bonus` (bonus) — when `true`, use MongoDB for storage; when `false`, use in-memory storage
+- `services/auth/config.json` holds:
+- `jwt.secret` - shared secret for HS256 signing and verification
+- `services/url-shortener/config.json` holds:
+- `mongodb` (bonus) - `host`, `port`, `database`, `collections.mappings`, `collections.counters`; used when bonus is enabled
+- `bonus` (bonus) - when `true`, use MongoDB for storage; when `false`, use in-memory storage
+- `AUTH_SERVICE_URL` (optional) - overrides auth service URL for the URL shortener (default `http://127.0.0.1:8001`)
 
 ## Setup
 
@@ -50,21 +51,21 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Run the service
+## Run the services
 
-Port is set in `.flaskenv` (e.g. 8000). Run with:
+Ports are set in each service `.flaskenv` (auth: 8001, url-shortener: 8000). Run each service from its folder with:
 
 ```bash
 flask run
 ```
 
-or `python app.py` (uses port 8000 by default).
+or `python app.py` in each service folder.
 
 ## API
 
-All endpoints are under `/`. Responses are JSON unless noted.
+URL shortener uses JWT auth on all endpoints except `GET /<id>`. The token is provided in the `Authorization` header.
 
-**1. `POST /**` — Create short URL
+**1. `POST /`** - Create short URL (auth required)
 
 Request body:
 
@@ -73,14 +74,15 @@ Request body:
 ```
 
 - 201: `{"id": "<short_id>"}`
-- 400 on missing/invalid URL
+- 400: `"error"`
+- 403: `"forbidden"`
 
-**2. `GET /<id>**` — Resolve ID to URL
+**2. `GET /<id>**` - Resolve ID to URL (public)
 
 - 301: `{"value": "<long_url>"}`
-- 404 if not found
+- 404: `"error"`
 
-**3. `PUT /<id>**` — Update URL mapping
+**3. `PUT /<id>**` - Update URL mapping (auth required, owner-only)
 
 Request body:
 
@@ -89,46 +91,68 @@ Request body:
 ```
 
 - 200: `{"id": "<short_id>"}`
-- 400 on invalid URL, 404 if not found
+- 400: `"error"`
+- 403: `"forbidden"`
+- 404: `"error"`
 
-**4. `DELETE /<id>**` — Delete mapping
+**4. `DELETE /<id>**` - Delete mapping (auth required, owner-only)
 
 - 204 on success
-- 404 if not found
+- 403: `"forbidden"`
+- 404: `"error"`
 
-**5. `GET /**` — List all short IDs
+**5. `GET /`** - List your short IDs (auth required)
 
 - 200:
 
 ```json
-{"value": ["<id1>", "<id2>", ...]}
+{"value": ["<id1>", "<id2>", "..."]}
 ```
 
 or
 
 `{"value": null}` if empty
 
-**6. `DELETE /**` — Delete all entries and reset counter
+**6. `DELETE /`** - Delete all entries and reset counter (auth required)
 
-- Returns 404 (as expected by the provided tests)
+- 403: `"forbidden"`
+- 404: `"error"` (as expected by the provided tests)
+
+**7. Auth service endpoints**
+
+**`POST /users`** - Create user
+- 201: `{"username": "<username>"}`
+- 409: `"duplicate"`
+
+**`PUT /users`** - Update password
+- 200: `{"username": "<username>"}`
+- 403: `"forbidden"`
+
+**`POST /users/login`** - Login and receive JWT
+- 201: `{"token": "<jwt>"}`
+- 403: `"forbidden"`
+
+**`POST /auth/verify`** - Verify JWT (used by URL shortener)
+- 200: `{"payload": { ... }}`
+- 403: `"forbidden"`
 
 ## Testing
 
-Start the service, then run:
+Start both services, then run:
 
 ```bash
-python -s test/test_1_marking_mk2.py
+python -s test/test_app.py
 ```
 
 ---
 
 ## Bonus implementation
 
-When the **bonus** option is enabled in config.json, the service uses **MongoDB** instead of in-memory storage. The same REST API and behaviour apply; only the storage backend changes.
+When the **bonus** option is enabled in `services/url-shortener/config.json`, the service uses **MongoDB** instead of in-memory storage. The same REST API and behaviour apply; only the storage backend changes.
 
 ### Enabling the bonus
 
-In `config.json`, set:
+In `services/url-shortener/config.json`, set:
 
 ```json
 "bonus": true
@@ -138,22 +162,20 @@ With `bonus` true, the storage layer uses `storage/database.py` (**DatabaseStora
 
 ### Configuration (bonus)
 
-The `config.json` section `mongodb` is used only when `bonus` is true:
+The `mongodb` section is used only when `bonus` is true:
 
-- `mongodb.host` — MongoDB host (default `localhost`)
-- `mongodb.port` — MongoDB port (default `27017`)
-- `mongodb.database` — Database name (e.g. `url_shortener`)
-- `mongodb.collections.mappings` — Collection for ID → URL mappings
-- `mongodb.collections.counters` — Collection for the monotonic counter
+- `mongodb.host` - MongoDB host (default `localhost`)
+- `mongodb.port` - MongoDB port (default `27017`)
+- `mongodb.database` - Database name (e.g. `url_shortener`)
+- `mongodb.collections.mappings` - Collection for ID to URL mappings
+- `mongodb.collections.counters` - Collection for the monotonic counter
 
 ### Behaviour (bonus)
 
-- **Mappings** are stored as documents `{ _id: "<id>", url: "<url>" }` in the mappings collection.
+- **Mappings** are stored as documents `{ _id: "<id>", url: "<url>", owner: "<username>" }` in the mappings collection.
 - **Counter** for generating new IDs is stored in the counters collection as a single document `{ _id: "url_id", seq: <number> }`. The value is incremented atomically; the number is then base64-encoded to produce the short ID.
-- **Concurrency** is handled with a per-process lock in `DatabaseStorage`; the counter update uses MongoDB’s atomic `$inc`.
+- **Concurrency** is handled with a per-process lock in `DatabaseStorage`; the counter update uses MongoDB's atomic `$inc`.
 - `DELETE /` clears all documents in the mappings collection and resets the counter document to `seq: 0`.
-
-All other endpoints, request/response formats, and test usage remain the same as in the base implementation.
 
 ### Web frontend
 
