@@ -5,6 +5,7 @@ from pymongo import MongoClient
 from storage.abstract_storage import AbstractStorage
 
 from utils import config
+from utils.password import hash_password, verify_password
 
 
 class DatabaseStorage(AbstractStorage):
@@ -13,8 +14,7 @@ class DatabaseStorage(AbstractStorage):
         client = MongoClient(uri)
         db = client[config.mongodb_database]
         users_name = config.mongodb_collections["users"]
-        # TODO: hash password
-        # {username: <username>, password: <password>}
+        # {username: <username>, password: <hash>}
         self._users = db[users_name]
         self._lock = Lock()
 
@@ -24,7 +24,7 @@ class DatabaseStorage(AbstractStorage):
             if doc is not None:
                 return False
             self._users.insert_one(
-                {"username": username, "password": password})
+                {"username": username, "password": hash_password(password)})
             return True
 
     def update_password(self, username: str, old_password: str, new_password: str) -> bool:
@@ -33,7 +33,7 @@ class DatabaseStorage(AbstractStorage):
                 return False
             self._users.find_one_and_update(
                 {"username": username},
-                {"password": new_password}
+                {"password": hash_password(new_password)}
             )
             return True
 
@@ -42,4 +42,4 @@ class DatabaseStorage(AbstractStorage):
             doc = self._users.find_one({"username": username})
             if doc is None:
                 return False
-            return doc.get("password") == password
+            return verify_password(password, doc.get("password"))
