@@ -123,6 +123,28 @@
       </form>
     </section>
 
+    <section>
+      <h2>Update password</h2>
+      <form class="update-password">
+        <div>
+          <label> Username <input name="username-update-pw" /> </label>
+        </div>
+        <div>
+          <label>
+            Old password <input name="old-password" type="password" />
+          </label>
+        </div>
+        <div>
+          <label>
+            New password <input name="new-password" type="password" />
+          </label>
+        </div>
+        <button type="submit">Update password</button>
+        <div class="result-container" hidden>Successfully updated the password</div>
+        <div class="result-container-error" hidden></div>
+      </form>
+    </section>
+
     <script>
       const SHORTENER_SERVICE = location.origin;
       let authUrl = new URL(location.href);
@@ -295,6 +317,7 @@
           body: JSON.stringify({ username, password }),
           headers: {
             Accept: "application/json",
+            "Content-type": "application/json",
           },
         });
         if (response.status === 403) {
@@ -327,6 +350,7 @@
           body: JSON.stringify({ username, password }),
           headers: {
             Accept: "application/json",
+            "Content-type": "application/json",
           },
         });
         if (response.status === 409) {
@@ -379,6 +403,40 @@
           $(".token .result-container-error").innerText = e;
           $(".token .result-container").hidden = true;
           $(".token .result-container-error").hidden = false;
+        }
+      });
+
+      async function updatePassword(username, oldPassword, newPassword) {
+        const response = await fetch(`${AUTH_SERVICE}/users`, {
+          method: "PUT",
+          body: JSON.stringify({
+            username,
+            "old-password": oldPassword,
+            "new-password": newPassword,
+          }),
+          headers: {
+            Accept: "application/json",
+            "Content-type": "application/json",
+          },
+        });
+        if (response.status === 403) {
+          throw new Error("Incorrect credentials");
+        }
+      }
+
+      $(".update-password").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = $("[name=username-update-pw]").value;
+        const oldPassword = $("[name=old-password]").value;
+        const newPassword = $("[name=new-password]").value;
+        try {
+          await updatePassword(username, oldPassword, newPassword);
+          $(".update-password .result-container").hidden = false;
+          $(".update-password .result-container-error").hidden = true;
+        } catch (e) {
+          $(".update-password .result-container-error").innerText = e;
+          $(".update-password .result-container").hidden = true;
+          $(".update-password .result-container-error").hidden = false;
         }
       });
 
