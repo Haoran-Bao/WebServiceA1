@@ -24,3 +24,7 @@ ul {
 li {
   display: inline;
 }
+.result-container-instance {
+  font-style: italic;
+  font-size: 0.85em;
+}

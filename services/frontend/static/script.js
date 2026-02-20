@@ -27,13 +27,14 @@ async function shortenUrl(url, token) {
             "Content-type": "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 400) {
-        throw new Error("URL is malformed");
+        return { error: "URL is malformed", instance };
     } else if (response.status === 403) {
-        throw new Error("Invalid token");
+        return { error: "Invalid token", instance };
     }
     const { id } = await response.json();
-    return `${SHORTENER_SERVICE}/${id}`;
+    return { shortUrl: `${SHORTENER_SERVICE}/${id}`, instance };
 }
 
 $(".shorten").addEventListener("submit", async (e) => {
@@ -41,12 +42,14 @@ $(".shorten").addEventListener("submit", async (e) => {
     const url = $("[name=url]").value;
     const resultEl = $(".result");
     const token = $("[name=token]").value;
-    try {
-        resultEl.innerText = resultEl.href = await shortenUrl(url, token);
+    const { shortUrl, instance, error } = await shortenUrl(url, token);
+    $(".shorten .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
+        resultEl.innerText = resultEl.href = shortUrl;
         $(".shorten .result-container").hidden = false;
         $(".shorten .result-container-error").hidden = true;
-    } catch (e) {
-        $(".shorten .result-container-error").innerText = e;
+    } else {
+        $(".shorten .result-container-error").innerText = error;
         $(".shorten .result-container").hidden = true;
         $(".shorten .result-container-error").hidden = false;
     }
@@ -62,15 +65,16 @@ async function editUrl(urlId, url, token) {
             "Content-type": "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 400) {
-        throw new Error("URL is malformed");
+        return { error: "URL is malformed", instance };
     } else if (response.status === 404) {
-        throw new Error("ID does not exist");
+        return { error: "ID does not exist", instance };
     } else if (response.status === 403) {
-        throw new Error("Invalid token");
+        return { error: "Invalid token", instance };
     }
     const { id } = await response.json();
-    return `${SHORTENER_SERVICE}/${id}`;
+    return { shortUrl: `${SHORTENER_SERVICE}/${id}`, instance };
 }
 
 $(".edit").addEventListener("submit", async (e) => {
@@ -79,12 +83,14 @@ $(".edit").addEventListener("submit", async (e) => {
     const id = $("[name=id]").value;
     const resultEl = $(".edit .result");
     const token = $("[name=token]").value;
-    try {
-        resultEl.innerText = resultEl.href = await editUrl(id, url, token);
+    const { shortUrl, instance, error } = await editUrl(id, url, token);
+    $(".edit .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
+        resultEl.innerText = resultEl.href = shortUrl;
         $(".edit .result-container").hidden = false;
         $(".edit .result-container-error").hidden = true;
-    } catch (e) {
-        $(".edit .result-container-error").innerText = e;
+    } else {
+        $(".edit .result-container-error").innerText = error;
         $(".edit .result-container").hidden = true;
         $(".edit .result-container-error").hidden = false;
     }
@@ -97,23 +103,26 @@ async function deleteUrl(urlId, token) {
         },
         method: "DELETE",
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 404) {
-        throw new Error("ID does not exist");
+        return { error: "ID does not exist", instance };
     } else if (response.status === 403) {
-        throw new Error("Invalid token");
+        return { error: "Invalid token", instance };
     }
+    return { instance };
 }
 
 $(".delete").addEventListener("submit", async (e) => {
     e.preventDefault();
     const id = $("[name=del-id]").value;
     const token = $("[name=token]").value;
-    try {
-        await deleteUrl(id, token);
+    const { error, instance } = await deleteUrl(id, token);
+    $(".delete .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
         $(".delete .result-container").hidden = false;
         $(".delete .result-container-error").hidden = true;
-    } catch (e) {
-        $(".delete .result-container-error").innerText = e;
+    } else {
+        $(".delete .result-container-error").innerText = error;
         $(".delete .result-container").hidden = true;
         $(".delete .result-container-error").hidden = false;
     }
@@ -126,20 +135,24 @@ async function deleteAll(token) {
             Authorization: token,
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 403) {
-        throw new Error("Invalid token");
+        return { error: "Invalid token", instance };
     }
+    return { instance };
 }
 
 $(".delete-all").addEventListener("click", async (e) => {
     e.preventDefault();
     const token = $("[name=token]").value;
-    try {
-        await deleteAll(token);
+    const { error, instance } = await deleteAll(token);
+    $(".delete-all .result-container-instance").innerText =
+        `Instance: ${instance}`;
+    if (!error) {
         $(".delete .result-container").hidden = false;
         $(".delete .result-container-error").hidden = true;
-    } catch (e) {
-        $(".delete .result-container-error").innerText = e;
+    } else {
+        $(".delete .result-container-error").innerText = error;
         $(".delete .result-container").hidden = true;
         $(".delete .result-container-error").hidden = false;
     }
@@ -151,11 +164,12 @@ async function loadUrls() {
             Accept: "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     const { value } = await response.json();
     if (value === null) {
-        return [];
+        return { urls: [], instance };
     } else {
-        return value;
+        return { urls: value, instance };
     }
 }
 
@@ -181,25 +195,27 @@ async function login(username, password) {
             "Content-type": "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 403) {
-        throw new Error("Incorrect credentials");
+        return { error: "Incorrect credentials", instance };
     }
     const { token } = await response.json();
-    return token;
+    return { token, instance };
 }
 
 $(".login").addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = $("[name=username]").value;
     const password = $("[name=password]").value;
-    try {
-        const token = await login(username, password);
+    const { token, error, instance } = await login(username, password);
+    $(".login .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
         $(".login .result-container").hidden = false;
         $(".login .result-container").innerText = "Successfully logged in";
         $(".login .result-container-error").hidden = true;
         $("[name=token]").value = token;
-    } catch (e) {
-        $(".login .result-container-error").innerText = e;
+    } else {
+        $(".login .result-container-error").innerText = error;
         $(".login .result-container").hidden = true;
         $(".login .result-container-error").hidden = false;
     }
@@ -214,22 +230,25 @@ async function register(username, password) {
             "Content-type": "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 409) {
-        throw new Error("Username already exists");
+        return { error: "Username already exists", instance };
     }
+    return { instance };
 }
 
 $(".register").addEventListener("click", async (e) => {
     e.preventDefault();
     const username = $("[name=username]").value;
     const password = $("[name=password]").value;
-    try {
-        await register(username, password);
+    const { error, instance } = await register(username, password);
+    $(".login .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
         $(".login .result-container").hidden = false;
         $(".login .result-container").innerText = "Successfully registered";
         $(".login .result-container-error").hidden = true;
-    } catch (e) {
-        $(".login .result-container-error").innerText = e;
+    } else {
+        $(".login .result-container-error").innerText = error;
         $(".login .result-container").hidden = true;
         $(".login .result-container-error").hidden = false;
     }
@@ -243,24 +262,26 @@ async function verify(token) {
             Authorization: token,
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 403) {
-        throw new Error("Token is invalid");
+        return { error: "Token is invalid", instance };
     }
     const { payload } = await response.json();
-    return payload;
+    return { payload, instance };
 }
 
 $(".token").addEventListener("submit", async (e) => {
     e.preventDefault();
     const token = $("[name=token]").value;
-    try {
-        const payload = await verify(token);
+    const { payload, error, instance } = await verify(token);
+    $(".token .result-container-instance").innerText = `Instance: ${instance}`;
+    if (!error) {
         $(".token .result-container").hidden = false;
         $(".token .result-container").innerText = `Welcome, ${payload.username}`;
         $(".token .result-container-error").hidden = true;
         $("[name=token]").value = token;
-    } catch (e) {
-        $(".token .result-container-error").innerText = e;
+    } else {
+        $(".token .result-container-error").innerText = error;
         $(".token .result-container").hidden = true;
         $(".token .result-container-error").hidden = false;
     }
@@ -279,9 +300,11 @@ async function updatePassword(username, oldPassword, newPassword) {
             "Content-type": "application/json",
         },
     });
+    const instance = response.headers.get("X-Instance-ID");
     if (response.status === 403) {
-        throw new Error("Incorrect credentials");
+        return { error: "Incorrect credentials", instance };
     }
+    return { instance };
 }
 
 $(".update-password").addEventListener("submit", async (e) => {
@@ -289,12 +312,18 @@ $(".update-password").addEventListener("submit", async (e) => {
     const username = $("[name=username-update-pw]").value;
     const oldPassword = $("[name=old-password]").value;
     const newPassword = $("[name=new-password]").value;
-    try {
-        await updatePassword(username, oldPassword, newPassword);
+    const { error, instance } = await updatePassword(
+        username,
+        oldPassword,
+        newPassword,
+    );
+    $(".update-password .result-container-instance").innerText =
+        `Instance: ${instance}`;
+    if (!error) {
         $(".update-password .result-container").hidden = false;
         $(".update-password .result-container-error").hidden = true;
-    } catch (e) {
-        $(".update-password .result-container-error").innerText = e;
+    } else {
+        $(".update-password .result-container-error").innerText = error;
         $(".update-password .result-container").hidden = true;
         $(".update-password .result-container-error").hidden = false;
     }
