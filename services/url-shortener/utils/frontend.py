@@ -1,4 +1,3 @@
-from flask import send_file
 from werkzeug.datastructures import Headers
 
 
@@ -31,7 +30,3 @@ def requests_html(headers: Headers):
         return False
     else:
         return True
-
-
-def respond_frontend():
-    return send_file('../../index.html'), 200
