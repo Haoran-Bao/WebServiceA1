@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
+import os
 
 from jwt import generate_jwt, verify_jwt
+from utils import config
 import storage
 
 app = Flask(__name__)
@@ -50,6 +52,14 @@ def verify_token():
         return jsonify("forbidden"), 403
     return jsonify({'payload': payload}), 200
 
+@app.after_request
+def add_instance_header(response):
+    """Add instance ID to response headers to demo load balancing (only in Docker)"""
+    if config.instance_id:
+        response.headers['X-Instance-ID'] = config.instance_id
+    return response
 
 if __name__ == '__main__':
-    app.run(port=8001, debug=True)
+    # Bind to 0.0.0.0 in Docker, 127.0.0.1 locally
+    host = '0.0.0.0' if os.getenv('DOCKER_ENV') == 'true' else '127.0.0.1'
+    app.run(host=host, port=8001, debug=True)
