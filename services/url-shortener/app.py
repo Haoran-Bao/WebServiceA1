@@ -68,8 +68,6 @@ def delete_with_id(id: str):
 
 @app.route('/', methods=['GET'])
 def get_all():
-    if frontend.requests_html(request.headers):
-        return frontend.respond_frontend()
     token = request.headers.get('Authorization')
     payload = verify_jwt(token)
     if payload is None:

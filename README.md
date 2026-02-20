@@ -181,10 +181,9 @@ The `mongodb` section is used only when `bonus` is true:
 - **Concurrency** is handled with a per-process lock in `DatabaseStorage`; the counter update uses MongoDB's atomic `$inc`.
 - `DELETE /` clears all documents in the mappings collection and resets the counter document to `seq: 0`.
 
-### Web frontend
+### Web frontend (bonus)
 
-When the homepage (`GET /`) is requested with the `Accept: text/html` header,
-a web frontend is returned instead of a JSON object with all URL IDs.
+Our URL shortener includes a web frontend, which can be accessed on port 8002.
 This frontend lets users shorten URLs, edit short URLs,
 delete URLs and show all URLs.
 
