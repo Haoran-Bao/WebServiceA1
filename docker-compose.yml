@@ -23,6 +23,8 @@ services:
       - url-shortener-2
       - url-shortener-3
       - url-shortener-4
+      - frontend-1
+      - frontend-2
     restart: unless-stopped
 
   # Authentication Service - Instance 1
@@ -139,6 +141,32 @@ services:
       - DOCKER_ENV=true
     depends_on:
       - mongodb
+    restart: unless-stopped
+
+  # Frontend - Instance 1
+  frontend-1:
+    build:
+      context: ./services/frontend
+      dockerfile: Dockerfile
+    environment:
+      - FLASK_RUN_PORT=8002
+      - AUTH_SERVICE_URL=http://nginx-gateway/
+      - BONUS=true
+      - INSTANCE_ID=frontend-1
+      - DOCKER_ENV=true
+    restart: unless-stopped
+
+  # Frontend - Instance 2
+  frontend-2:
+    build:
+      context: ./services/frontend
+      dockerfile: Dockerfile
+    environment:
+      - FLASK_RUN_PORT=8002
+      - AUTH_SERVICE_URL=http://nginx-gateway/
+      - BONUS=true
+      - INSTANCE_ID=frontend-2
+      - DOCKER_ENV=true
     restart: unless-stopped
 
 volumes:
