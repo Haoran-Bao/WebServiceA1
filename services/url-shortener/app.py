@@ -118,4 +118,6 @@ def add_instance_header(response):
     return response
 
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    # Bind to 0.0.0.0 in Docker, 127.0.0.1 locally
+    host = '0.0.0.0' if os.getenv('DOCKER_ENV') == 'true' else '127.0.0.1'
+    app.run(host=host, port=8000, debug=True)
