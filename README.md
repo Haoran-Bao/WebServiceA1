@@ -106,7 +106,7 @@ Request body:
 - 200:
 
 ```json
-{"value": ["<id1>", "<id2>", "..."]}
+{ "value": ["<id1>", "<id2>", "..."] }
 ```
 
 or
@@ -121,18 +121,22 @@ or
 **7. Auth service endpoints**
 
 **`POST /users`** - Create user
+
 - 201: `{"username": "<username>"}`
 - 409: `"duplicate"`
 
 **`PUT /users`** - Update password
+
 - 200: `{"username": "<username>"}`
 - 403: `"forbidden"`
 
 **`POST /users/login`** - Login and receive JWT
+
 - 201: `{"token": "<jwt>"}`
 - 403: `"forbidden"`
 
 **`POST /auth/verify`** - Verify JWT (used by URL shortener)
+
 - 200: `{"payload": { ... }}`
 - 403: `"forbidden"`
 
@@ -183,3 +187,76 @@ When the homepage (`GET /`) is requested with the `Accept: text/html` header,
 a web frontend is returned instead of a JSON object with all URL IDs.
 This frontend lets users shorten URLs, edit short URLs,
 delete URLs and show all URLs.
+
+---
+
+## Nginx API Gateway with Load Balancing (Assignment 2 - Section 2b)
+
+This project includes an Nginx-based API Gateway that provides a single entry point for all microservices with load balancing across multiple instances.
+
+### Architecture
+
+- **Single Entry Point**: All requests go through Nginx on port 80
+- **Load Balancing**: Requests distributed across multiple service instances using round-robin algorithm
+- **Service Instances**:
+  - Authentication Service: 3 instances
+  - URL Shortener Service: 4 instances
+- **Shared Database**: MongoDB (port 27018 externally) provides persistent storage for all instances
+
+### Quick Start with Docker Compose
+
+**Prerequisites**: Docker and Docker Compose installed
+
+```bash
+# Start all services (gateway + multiple service instances)
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d --build
+```
+
+### Access via Gateway
+
+- **API Gateway**: http://localhost
+- **Auth Service**: http://localhost/auth/
+- **URL Shortener**: http://localhost/shortener/
+
+### Example Usage
+
+```bash
+# Create user via gateway
+curl -X POST http://localhost/auth/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"secret123"}'
+
+# Login via gateway
+curl -X POST http://localhost/auth/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"secret123"}'
+
+# Create short URL via gateway (replace TOKEN with actual JWT)
+curl -X POST http://localhost/shortener/ \
+  -H "Content-Type: application/json" \
+  -H "Authorization: <TOKEN>" \
+  -d '{"value":"https://example.com"}'
+
+# Check which instance handled the request (look for X-Instance-ID header)
+curl -X POST http://localhost/auth/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"secret123"}' \
+  -i | grep "X-Instance-ID"
+```
+
+### Files
+
+- `nginx/nginx.conf` - Nginx configuration with load balancing
+- `nginx/Dockerfile` - Nginx gateway container
+- `docker-compose.yml` - Multi-instance service orchestration (includes MongoDB)
+- `services/auth/Dockerfile` - Auth service container
+- `services/url-shortener/Dockerfile` - URL shortener container
+
+### Load Balancing Details
+
+- **Method**: Round-robin (distributes requests sequentially across all instances)
+- **Instance Identification**: Each response includes `X-Instance-ID` header showing which instance handled the request
+- **Shared Storage**: MongoDB provides consistent data across all service instances
