@@ -36,7 +36,7 @@ class DatabaseStorage(AbstractStorage):
                 return False
             self._users.find_one_and_update(
                 {"_id": username},
-                {"password": hash_password(new_password)}
+                {"$set": {"password": hash_password(new_password)}},
             )
             return True
 
