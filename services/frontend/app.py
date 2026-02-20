@@ -1,4 +1,5 @@
 from flask import Flask, send_file, send_from_directory
+import os
 
 app = Flask(__name__)
 
@@ -14,4 +15,5 @@ def serve_index():
 
 
 if __name__ == '__main__':
-    app.run(port=8002, debug=True)
+    host = '0.0.0.0' if os.getenv('DOCKER_ENV') == 'true' else '127.0.0.1'
+    app.run(host=host, port=8002, debug=True)
