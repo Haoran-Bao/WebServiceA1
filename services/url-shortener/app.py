@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
+import os
 
-from utils import validation, frontend
+from utils import validation, frontend, config
 from utils.auth import verify_jwt
 import storage
 
 app = Flask(__name__)
-
 
 @app.route('/<id>', methods=['GET'])
 def get_with_id(id: str):
@@ -109,6 +109,13 @@ def delete_all():
     # By looking at the test, any user can call this for some reason
     storage.delete_ids()
     return jsonify("error"), 404
+
+@app.after_request
+def add_instance_header(response):
+    """Add instance ID to response headers to demo load balancing(only in Docker)"""
+    if config.instance_id:
+        response.headers['X-Instance-ID'] = config.instance_id
+    return response
 
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
