@@ -158,10 +158,11 @@ $(".delete-all").addEventListener("click", async (e) => {
     }
 });
 
-async function loadUrls() {
+async function loadUrls(token) {
     const response = await fetch(`${SHORTENER_SERVICE}/`, {
         headers: {
             Accept: "application/json",
+            Authorization: token,
         },
     });
     const instance = response.headers.get("X-Instance-ID");
@@ -174,7 +175,10 @@ async function loadUrls() {
 }
 
 $(".load-urls").addEventListener("click", async (e) => {
-    const urls = await loadUrls();
+    const token = $("[name=token]").value;
+    const { urls, instance } = await loadUrls(token);
+    $(".load-urls + .result-container-instance").innerText =
+        `Instance: ${instance}`;
     const urlsList = $(".urls");
     urlsList.innerHTML = "";
     for (const url of urls) {
