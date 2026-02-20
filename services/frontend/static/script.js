@@ -1,7 +1,16 @@
-const SHORTENER_SERVICE = location.origin;
-let authUrl = new URL(location.href);
-authUrl.port = 8001;
-const AUTH_SERVICE = authUrl.origin;
+let SHORTENER_SERVICE;
+let AUTH_SERVICE;
+let url = new URL(location.href);
+
+if (url.port === "8002") {
+    url.port = "8000";
+    SHORTENER_SERVICE = url.origin;
+    url.port = "8001";
+    AUTH_SERVICE = url.origin;
+} else {
+    SHORTENER_SERVICE = `${url.origin}/shortener`;
+    AUTH_SERVICE = `${url.origin}/auth`;
+}
 
 const $ = (query) => document.querySelector(query);
 const $$ = (query) => document.querySelectorAll(query);
