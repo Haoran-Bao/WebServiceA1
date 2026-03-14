@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: frontend
+  template:
+    metadata:
+      labels:
+        service: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 3a1b507e1d3f48bd842c59565d22f4/web-service:frontend
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8002
+          env:
+            - name: DOCKER_ENV
+              value: "true"
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    service: frontend
+  ports:
+    - port: 8002
+      targetPort: 8002
+      nodePort: 30002

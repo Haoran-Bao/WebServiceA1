@@ -1,0 +1,37 @@
+# https://docs.docker.com/guides/kube-deploy/
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: nginx
+  template:
+    metadata:
+      labels:
+        service: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: 3a1b507e1d3f48bd842c59565d22f4/web-service:nginx
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    service: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30009
