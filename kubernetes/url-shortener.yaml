@@ -28,6 +28,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: BONUS
+              value: "true"
+            - name: MONGODB_HOST
+              value: mongodb
+            - name: MONGODB_PORT
+              value: "27017"
 ---
 apiVersion: v1
 kind: Service
