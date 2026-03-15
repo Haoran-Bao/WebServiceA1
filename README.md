@@ -41,6 +41,21 @@ This project is a microservices-based URL shortener with an authentication servi
 
 - Spins up MongoDB, Nginx gateway, 3 auth instances, 4 shortener instances, 2 frontend instances.
 
+**6. Kubernetes**
+
+- Build and push images:
+  - `docker build -t 3a1b507e1d3f48bd842c59565d22f4/web-service:SERVICE .`
+  - `docker push 3a1b507e1d3f48bd842c59565d22f4/web-service:SERVICE`
+  - Where `SERVICE` is each of `nginx` (in directory `nginx-k8s`), `url-shortener`, `auth`, `frontend`
+- Deploy pods and services:
+  - `kubectl apply -f SERVICE.yaml`
+  - Where `SERVICE` is each of `nginx`, `url-shortener`, `auth`, `frontend`, `mongodb`
+- Expose the port to the internet:
+  - `./forward-port.sh`
+  - If this raises a permission error,
+    run `sudo sysctl net.ipv4.ip_unprivileged_port_start=80`
+    to allow non-root users to open port 80
+
 ## Project Structure
 
 - `services/auth/app.py` - Auth service routes
