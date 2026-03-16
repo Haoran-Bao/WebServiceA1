@@ -1,4 +1,4 @@
-# Assignment 2 - Web Services and Cloud-Based Systems
+# Assignment 3 - Web Services and Cloud-Based Systems
 
 This project is a microservices-based URL shortener with an authentication service, a static frontend UI, and an Nginx API gateway for load balancing. The intended workflow is to run everything via Docker Compose (gateway + multiple service instances + MongoDB).
 
