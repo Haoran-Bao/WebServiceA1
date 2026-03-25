@@ -1,0 +1,35 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: routes
+spec:
+  virtualhost:
+    fqdn: 145.100.130.46
+  routes:
+  - conditions:
+    - prefix: /frontend/
+    services:
+    - name: frontend
+      port: 8002
+    pathRewritePolicy:
+      replacePrefix:
+      - prefix: /frontend/
+        replacement: /
+  - conditions:
+    - prefix: /auth/
+    services:
+    - name: auth
+      port: 8001
+    pathRewritePolicy:
+      replacePrefix:
+      - prefix: /auth/
+        replacement: /
+  - conditions:
+    - prefix: /shortener/
+    services:
+    - name: url-shortener
+      port: 8000
+    pathRewritePolicy:
+      replacePrefix:
+      - prefix: /shortener/
+        replacement: /
