@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-canary
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: auth-canary
+  template:
+    metadata:
+      labels:
+        service: auth-canary
+    spec:
+      containers:
+        - name: auth
+          image: 3a1b507e1d3f48bd842c59565d22f4/web-service:auth
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8001
+          env:
+            - name: DOCKER_ENV
+              value: "true"
+            - name: INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: BONUS
+              value: "true"
+            - name: MONGODB_HOST
+              value: mongodb
+            - name: MONGODB_PORT
+              value: "27017"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-canary
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    service: auth-canary
+  ports:
+    - port: 8001
+      targetPort: 8001
+      nodePort: 30011

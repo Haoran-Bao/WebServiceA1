@@ -24,6 +24,10 @@ spec:
     services:
     - name: auth
       port: 8001
+      weight: 80
+    - name: auth-canary
+      port: 8001
+      weight: 20
     pathRewritePolicy:
       replacePrefix:
       - prefix: /auth/
