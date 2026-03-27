@@ -11,6 +11,10 @@ spec:
     services:
     - name: frontend
       port: 8002
+      weight: 95
+    - name: frontend-canary
+      port: 8002
+      weight: 5
     pathRewritePolicy:
       replacePrefix:
       - prefix: /frontend/
